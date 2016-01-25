@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -21,8 +22,6 @@ public class GameSurfaceView extends SurfaceView implements Runnable {
     private int y = 100;
     private int screenWidth;
     private int screenHeight;
-
-
     private Sprite[] sprites;
 
     public GameSurfaceView(Context context) {
@@ -45,12 +44,16 @@ public class GameSurfaceView extends SurfaceView implements Runnable {
             }
         });
 
-
         sprites = new Sprite[]{
-                new Sprite(100, 100, BitmapFactory.decodeResource(this.getResources(), R.mipmap.ic_launcher)),
-                new Sprite(600, 400, BitmapFactory.decodeResource(this.getResources(), R.mipmap.ic_launcher))
+                new Sprite(100, 100,
+                        BitmapFactory.decodeResource(this.getResources(), R.mipmap.ic_launcher)),
+                new Sprite(600, 400,
+                        BitmapFactory.decodeResource(this.getResources(), R.mipmap.ic_launcher),
+                        Color.RED),
+                new Sprite(400, 800,
+                        BitmapFactory.decodeResource(this.getResources(), R.mipmap.ic_launcher),
+                        Color.BLUE)
         };
-
     }
 
     /**
@@ -126,10 +129,28 @@ public class GameSurfaceView extends SurfaceView implements Runnable {
             if ((sprite.y < 0) || ((sprite.y + sprite.image.getHeight()) > screenHeight)) {
                 sprite.directionY *= -1;
             }
+            Rect current = new Rect(sprite.x, sprite.y,
+                    sprite.x + sprite.image.getWidth(),
+                    sprite.y + sprite.image.getHeight());
+            for (int subindex = 0; subindex < length; subindex++) {
+                if (subindex != index) {
+                    Sprite subsprite = sprites[subindex];
+                    Rect other = new Rect(subsprite.x, subsprite.y,
+                            subsprite.x + subsprite.image.getWidth(),
+                            subsprite.y + subsprite.image.getHeight());
 
+                    if (Rect.intersects(current, other)) {
+                        // Poor physics implementation.
+                        sprite.directionX *= -1;
+                        sprite.directionY *= -1;
+                    }
+                }
+            }
             sprite.x += (sprite.directionX * sprite.speed);
             sprite.y += (sprite.directionY * sprite.speed);
         }
+
+
     }
 
     protected void render(Canvas canvas) {
@@ -141,7 +162,6 @@ public class GameSurfaceView extends SurfaceView implements Runnable {
                 ColorFilter filter = new LightingColorFilter(sprites[index].color, 0);
                 p.setColorFilter(filter);
             }
-
             canvas.drawBitmap(sprites[index].image, sprites[index].x, sprites[index].y, p);
         }
     }
